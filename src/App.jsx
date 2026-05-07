@@ -14,6 +14,12 @@ import { pdf } from '@react-pdf/renderer';
 import { Settings, Printer } from 'lucide-react';
 import { DEFAULT_PLANOS, DEFAULT_TAXA, DEFAULT_DESCONTO_MAX, calculateROI } from './logic/roiEngine';
 import { syncDataToSheet, processOfflineLeads, fetchValitagPlans } from './logic/syncEngine';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  import.meta.env.VITE_SUPABASE_URL,
+  import.meta.env.VITE_SUPABASE_ANON_KEY
+);
 
 const DEFAULT_QUESTIONS = [
   { id: 'tipo_etiqueta', text: 'Como sua operação faz as etiquetas de validade?', inputType: 'options', options: [{label: 'Manual', value: 'manual'}, {label: 'Já uso etiquetas automatizadas', value: 'automatizada'}, {label: 'Não fazem', value: 'nao_fazem'}] },
@@ -221,6 +227,19 @@ function App() {
       vendedor_id: localStorage.getItem('valitag_dispositivo_id') || 'desconhecido'
     };
     syncDataToSheet(pricingConfig?.webhookUrl, leadData, 'lead');
+
+    try {
+      const { data, error } = await supabase
+        .from('leads_roi')
+        .insert([{ 
+          nome_cliente: estabelecimento || 'Não informado', 
+          roi_estimado: roiData.totalPerdaAnual || 0 
+        }]);
+        
+      if (error) console.error('Erro ao salvar lead no Supabase:', error);
+    } catch (err) {
+      console.error('Falha de conexão com o Supabase:', err);
+    }
 
     setIsGeneratingPdf(true);
     try {
