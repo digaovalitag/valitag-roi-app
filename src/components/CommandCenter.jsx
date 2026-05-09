@@ -5,7 +5,7 @@ import AdminSettings from './AdminSettings';
 import TeamSettings from './TeamSettings';
 import { syncDataToSheet } from '../logic/syncEngine';
 
-export default function CommandCenter({ onClose, questions, setQuestions, pricingConfig, setPricingConfig, descontoRs, setDescontoRs, team, setTeam, demoModules, setDemoModules, linksConfig, setLinksConfig, hardwareConfig, setHardwareConfig }) {
+export default function CommandCenter({ supabase, onClose, questions, setQuestions, pricingConfig, setPricingConfig, descontoRs, setDescontoRs, team, setTeam, demoModules, setDemoModules, linksConfig, setLinksConfig, hardwareConfig, setHardwareConfig }) {
   const [activeTab, setActiveTab] = useState('roteiro');
 
   return (
@@ -60,6 +60,7 @@ export default function CommandCenter({ onClose, questions, setQuestions, pricin
           )}
           {activeTab === 'admin' && (
             <AdminSettings 
+              supabase={supabase}
               pricingConfig={pricingConfig} setPricingConfig={setPricingConfig}
               descontoRs={descontoRs} setDescontoRs={setDescontoRs}
               demoModules={demoModules} setDemoModules={setDemoModules}

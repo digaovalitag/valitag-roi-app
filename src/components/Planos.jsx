@@ -4,8 +4,14 @@ import { NumericFormat } from 'react-number-format';
 
 const formatMoney = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 
-export default function Planos({ planoId, setPlanoId, licencasAdicionais, setLicencasAdicionais, descontoTaxa, setDescontoTaxa, descontoRs, setDescontoRs, descontoPlanoRs, setDescontoPlanoRs, descontoLicencasRs, setDescontoLicencasRs, descontoSetupLicencasRs, setDescontoSetupLicencasRs, pricingConfig, validadeProposta, setValidadeProposta, validadeSetup, setValidadeSetup }) {
-  const { planos, taxa, descontoMax, precoLicencaExtra = 147, taxaLicencaExtra = 700 } = pricingConfig;
+export default function Planos({ user, planoId, setPlanoId, licencasAdicionais, setLicencasAdicionais, descontoTaxa, setDescontoTaxa, descontoRs, setDescontoRs, descontoPlanoRs, setDescontoPlanoRs, descontoLicencasRs, setDescontoLicencasRs, descontoSetupLicencasRs, setDescontoSetupLicencasRs, pricingConfig, validadeProposta, setValidadeProposta, validadeSetup, setValidadeSetup }) {
+  const { planos, taxa, precoLicencaExtra = 147, taxaLicencaExtra = 700 } = pricingConfig;
+  const globalDescontoMax = pricingConfig.descontoMax;
+  
+  // O limite de desconto do usuário sobrepõe o global se existir, senão usa o global
+  const descontoMax = user?.limite_desconto_maximo !== undefined && user?.limite_desconto_maximo !== null
+    ? user.limite_desconto_maximo 
+    : globalDescontoMax;
   const plano = planos[planoId] || planos.starter;
 
   const currentFinalValue = Math.max(0, taxa - (parseFloat(descontoRs) || 0));

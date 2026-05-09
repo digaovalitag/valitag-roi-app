@@ -10,6 +10,8 @@ import ProvaSocial from './components/ProvaSocial';
 import Planos from './components/Planos';
 import CommandCenter from './components/CommandCenter';
 import ProposalPDFDocument from './components/ProposalPDFDocument';
+import Login from './components/Login';
+import SavedReports from './components/SavedReports';
 import { pdf } from '@react-pdf/renderer';
 import { Settings, Printer } from 'lucide-react';
 import { DEFAULT_PLANOS, DEFAULT_TAXA, DEFAULT_DESCONTO_MAX, calculateROI } from './logic/roiEngine';
@@ -43,8 +45,10 @@ const DEFAULT_DEMOS = [
 ];
 
 function App() {
+  const [user, setUser] = useState(null);
   const [currentStep, setCurrentStep] = useState(1);
   const [showConfig, setShowConfig] = useState(false);
+  const [showSavedReports, setShowSavedReports] = useState(false);
   
   const [fat, setFat] = useState('');
   const [planoId, setPlanoId] = useState('starter');
@@ -163,7 +167,23 @@ function App() {
     if (!localStorage.getItem('valitag_dispositivo_id')) {
       localStorage.setItem('valitag_dispositivo_id', 'device_' + Math.random().toString(36).substring(2, 15));
     }
+
+    const savedUser = localStorage.getItem('valitag_user');
+    if (savedUser) setUser(JSON.parse(savedUser));
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem('valitag_user', JSON.stringify(user));
+      setTeam({
+        nome: user.nome,
+        cargo: user.cargo || 'Consultor Valitag',
+        foto: user.foto_url || ''
+      });
+    } else {
+      localStorage.removeItem('valitag_user');
+    }
+  }, [user]);
 
   useEffect(() => {
     localStorage.setItem('valitag_current_step', currentStep.toString());
@@ -233,7 +253,13 @@ function App() {
         .from('leads_roi')
         .insert([{ 
           nome_cliente: estabelecimento || 'Não informado', 
-          roi_estimado: roiData.totalPerdaAnual || 0 
+          roi_estimado: roiData.totalPerdaAnual || 0,
+          vendedor_id: user?.id || null,
+          dados_proposta: {
+            estabelecimento, proprietario, responsavel, fat, responses, planoId,
+            descontoRs, descontoTaxa, descontoPlanoRs, descontoLicencasRs,
+            descontoSetupLicencasRs, licencasAdicionais
+          }
         }]);
         
       if (error) console.error('Erro ao salvar lead no Supabase:', error);
@@ -303,10 +329,15 @@ function App() {
     setCurrentStep(1);
   };
 
+  if (!user) {
+    return <Login supabase={supabase} onLogin={setUser} />;
+  }
+
   return (
     <>
       {showConfig && (
         <CommandCenter 
+          supabase={supabase}
           onClose={() => setShowConfig(false)}
           questions={questions} setQuestions={setQuestions}
           pricingConfig={pricingConfig} setPricingConfig={setPricingConfig}
@@ -315,6 +346,30 @@ function App() {
           demoModules={demoModules} setDemoModules={setDemoModules}
           linksConfig={linksConfig} setLinksConfig={setLinksConfig}
           hardwareConfig={hardwareConfig} setHardwareConfig={setHardwareConfig}
+        />
+      )}
+
+      {showSavedReports && (
+        <SavedReports 
+          user={user}
+          supabase={supabase}
+          onClose={() => setShowSavedReports(false)}
+          onLoadProposal={(data) => {
+            setEstabelecimento(data.estabelecimento || '');
+            setProprietario(data.proprietario || '');
+            setResponsavel(data.responsavel || '');
+            setFat(data.fat || '');
+            setResponses(data.responses || {});
+            setPlanoId(data.planoId || 'starter');
+            setDescontoRs(data.descontoRs || '');
+            setDescontoTaxa(data.descontoTaxa || false);
+            setDescontoPlanoRs(data.descontoPlanoRs || 0);
+            setDescontoLicencasRs(data.descontoLicencasRs || 0);
+            setDescontoSetupLicencasRs(data.descontoSetupLicencasRs || 0);
+            setLicencasAdicionais(data.licencasAdicionais || 0);
+            setCurrentStep(6);
+            setShowSavedReports(false);
+          }}
         />
       )}
 
@@ -360,6 +415,7 @@ function App() {
             {currentStep === 5 && <ProvaSocial />}
             {currentStep === 6 && (
               <Planos 
+                user={user}
                 planoId={planoId} setPlanoId={setPlanoId}
                 licencasAdicionais={licencasAdicionais} setLicencasAdicionais={setLicencasAdicionais}
                 descontoTaxa={descontoTaxa} setDescontoTaxa={setDescontoTaxa}
@@ -429,12 +485,16 @@ function App() {
         </main>
 
         <RightSidebar 
+          supabase={supabase}
+          user={user}
           team={team}
           estabelecimento={estabelecimento}
           responsavel={responsavel}
           onOpenConfig={() => setShowConfig(true)}
+          onOpenSavedReports={() => setShowSavedReports(true)}
           onReset={handleReset}
           onSendProposal={handleSendProposal}
+          onLogout={() => setUser(null)}
         />
 
       </div>

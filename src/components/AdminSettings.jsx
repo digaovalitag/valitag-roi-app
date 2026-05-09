@@ -1,8 +1,9 @@
 import React, { useRef, useState } from 'react';
 import { Download, Upload, Plus, Trash2, Link, RefreshCw, Eye, EyeOff } from 'lucide-react';
 import { fetchValitagPlans } from '../logic/syncEngine';
+import AdminVendedores from './AdminVendedores';
 
-export default function AdminSettings({ pricingConfig, setPricingConfig, descontoRs, setDescontoRs, demoModules, setDemoModules, linksConfig, setLinksConfig, hardwareConfig, setHardwareConfig }) {
+export default function AdminSettings({ supabase, pricingConfig, setPricingConfig, descontoRs, setDescontoRs, demoModules, setDemoModules, linksConfig, setLinksConfig, hardwareConfig, setHardwareConfig }) {
   const fileInputRef = useRef(null);
   const { planos, taxa, descontoMax } = pricingConfig;
   const [isSyncing, setIsSyncing] = useState(false);
@@ -157,6 +158,8 @@ export default function AdminSettings({ pricingConfig, setPricingConfig, descont
 
   return (
     <div className="space-y-8 text-slate-100 animate-in fade-in slide-in-from-bottom-4 duration-300">
+      <AdminVendedores supabase={supabase} />
+
       <div className="flex justify-between items-center mb-6 border-b border-slate-800 pb-4">
         <div>
           <h3 className="text-xl font-bold">Configurações de Preços</h3>

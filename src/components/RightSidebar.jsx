@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { FileText, ShoppingCart, Settings, Send, User, ChevronDown, ChevronUp } from 'lucide-react';
 
-export default function RightSidebar({ team, estabelecimento, responsavel, onOpenConfig, onReset, onSendProposal }) {
+export default function RightSidebar({ user, team, estabelecimento, responsavel, onOpenConfig, onReset, onSendProposal, onOpenSavedReports, onLogout }) {
   const [menuOpen, setMenuOpen] = useState(false);
   return (
     <aside className="w-80 bg-[#0084d1] h-screen flex flex-col text-white print:hidden shrink-0 shadow-[-10px_0_30px_rgba(0,132,209,0.2)] z-30">
@@ -50,20 +50,29 @@ export default function RightSidebar({ team, estabelecimento, responsavel, onOpe
               </button>
               
               <button 
-                disabled
-                className="w-full flex items-center gap-3 p-4 hover:bg-slate-50 transition-colors border-b border-slate-100 text-left opacity-50 cursor-not-allowed"
-                title="Em breve"
+                onClick={() => { onOpenSavedReports(); setMenuOpen(false); }}
+                className="w-full flex items-center gap-3 p-4 hover:bg-slate-50 transition-colors border-b border-slate-100 text-left"
               >
-                <FileText className="w-5 h-5 text-slate-400" />
+                <FileText className="w-5 h-5 text-blue-600" />
                 <span className="font-bold text-sm">Relatórios Salvos</span>
               </button>
 
+              {user?.role === 'admin' && (
+                <button 
+                  onClick={() => { onOpenConfig(); setMenuOpen(false); }}
+                  className="w-full flex items-center gap-3 p-4 hover:bg-slate-50 transition-colors border-b border-slate-100 text-left"
+                >
+                  <Settings className="w-5 h-5 text-blue-600" />
+                  <span className="font-bold text-sm">Painel Admin</span>
+                </button>
+              )}
+
               <button 
-                onClick={() => { onOpenConfig(); setMenuOpen(false); }}
-                className="w-full flex items-center gap-3 p-4 hover:bg-slate-50 transition-colors border-b border-slate-100 text-left"
+                onClick={() => { onLogout(); setMenuOpen(false); }}
+                className="w-full flex items-center gap-3 p-4 hover:bg-red-50 transition-colors border-b border-slate-100 text-left"
               >
-                <Settings className="w-5 h-5 text-blue-600" />
-                <span className="font-bold text-sm">Painel Admin</span>
+                <User className="w-5 h-5 text-red-500" />
+                <span className="font-bold text-sm text-red-500">Sair da Conta</span>
               </button>
 
 
