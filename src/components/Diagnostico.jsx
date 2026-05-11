@@ -225,9 +225,10 @@ export default function Diagnostico({
                 })}
               </div>
             </div>
-            <div className="border-t border-slate-800 my-6"></div>
-          </>
-        )}
+          )}
+          <div className="border-t border-slate-800 my-6"></div>
+        </>
+      )}
       </div>
     </div>
   );

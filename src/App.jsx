@@ -363,11 +363,6 @@ function App() {
           user={user}
           supabase={supabase}
           onClose={() => setShowSavedReports(false)}
-          onLoadProposal={(data) => {
-            setEstabelecimento(data.estabelecimento || '');
-            setProprietario(data.proprietario || '');
-            setResponsavel(data.responsavel || '');
-            setFat(data.fat || '');
           onLoadProposal={(d) => {
             setEstabelecimento(d.estabelecimento || '');
             setProprietario(d.proprietario || '');
