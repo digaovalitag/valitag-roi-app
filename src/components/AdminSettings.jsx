@@ -353,6 +353,7 @@ export default function AdminSettings({ supabase, pricingConfig, setPricingConfi
                     {p.visible === false ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
+              </div>
               <input 
                 type="number"
                 value={p.preco}
