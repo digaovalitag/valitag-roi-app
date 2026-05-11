@@ -390,16 +390,20 @@ export default function ProposalPDFDocument({ estabelecimento, proprietario, res
             
             {planoId === 'starter' ? (
               <View style={{ backgroundColor: '#eff6ff', padding: 15, borderRadius: 8, marginBottom: 20, width: '100%', alignItems: 'center', borderWidth: 1, borderColor: '#bfdbfe' }}>
-                <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#1e40af', marginBottom: 4, textTransform: 'uppercase' }}>Economia Identificada</Text>
+                <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#1e40af', marginBottom: 4, textTransform: 'uppercase' }}>
+                  {skipDiagnostic ? 'Vantagem do Plano' : 'Economia Identificada'}
+                </Text>
                 <Text style={{ fontSize: 10, color: '#1e3a8a', textAlign: 'center', lineHeight: 1.4 }}>
-                  Foram identificados valores passíveis de economia com base na operação atual.
+                  {skipDiagnostic ? 'Padronização rápida e robusta para toda a operação.' : 'Foram identificados valores passíveis de economia com base na operação atual.'}
                 </Text>
               </View>
             ) : (
               <View style={{ backgroundColor: '#ecfdf5', padding: 15, borderRadius: 8, marginBottom: 20, width: '100%', alignItems: 'center', borderWidth: 1, borderColor: '#a7f3d0' }}>
-                <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#065f46', marginBottom: 4, textTransform: 'uppercase' }}>Economia Projetada</Text>
+                <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#065f46', marginBottom: 4, textTransform: 'uppercase' }}>
+                  {skipDiagnostic ? 'Aceleração de Resultados' : 'Economia Projetada'}
+                </Text>
                 <Text style={{ fontSize: 10, color: '#047857', textAlign: 'center', lineHeight: 1.4 }}>
-                  Este plano proporciona uma economia projetada de <Text style={{ fontWeight: 'bold' }}>{formatMoney(roi.economiaDoPlanoMensal)}</Text> ao mês em relação às perdas mapeadas.
+                  {skipDiagnostic ? 'Com a Valitag, você estanca perdas financeiras desde o primeiro mês de operação.' : `Este plano proporciona uma economia projetada de ${formatMoney(roi.economiaDoPlanoMensal)} ao mês em relação às perdas mapeadas.`}
                 </Text>
               </View>
             )}
@@ -464,13 +468,15 @@ export default function ProposalPDFDocument({ estabelecimento, proprietario, res
           </View>
         </View>
 
-        <View style={{ backgroundColor: '#ecfdf5', borderWidth: 1, borderColor: '#a7f3d0', padding: 20, borderRadius: 8, alignItems: 'center', marginTop: 20 }}>
-          <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#065f46', textTransform: 'uppercase' }}>Previsão de Payback</Text>
-          <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#059669', marginVertical: 10 }}>
-            {roi.paybackDias > 0 ? `${Math.ceil(roi.paybackDias)} Dias` : 'Imediato'}
-          </Text>
-          <Text style={{ fontSize: 10, color: '#047857' }}>O sistema se paga rapidamente eliminando o desperdício diário mapeado.</Text>
-        </View>
+        {!skipDiagnostic && (
+          <View style={{ backgroundColor: '#ecfdf5', borderWidth: 1, borderColor: '#a7f3d0', padding: 20, borderRadius: 8, alignItems: 'center', marginTop: 20 }}>
+            <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#065f46', textTransform: 'uppercase' }}>Previsão de Payback</Text>
+            <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#059669', marginVertical: 10 }}>
+              {roi.paybackDias > 0 ? `${Math.ceil(roi.paybackDias)} Dias` : 'Imediato'}
+            </Text>
+            <Text style={{ fontSize: 10, color: '#047857' }}>O sistema se paga rapidamente eliminando o desperdício diário mapeado.</Text>
+          </View>
+        )}
         <View style={{ alignItems: 'center', marginTop: 30, marginBottom: 10 }}>
           <Link src="https://www.valitag.com.br/onboarding" style={[styles.btnSuccess, { paddingHorizontal: 40, paddingVertical: 15, fontSize: 16, backgroundColor: '#0ea5e9', width: '80%' }]}>
             Clique aqui e faça seu cadastro
@@ -577,7 +583,7 @@ export default function ProposalPDFDocument({ estabelecimento, proprietario, res
           </Link>
         </View>
 
-        {(planoId === 'starter' || planoId === 'pro') && (
+        {(!skipDiagnostic && (planoId === 'starter' || planoId === 'pro')) && (
           <View style={styles.crossSellBox}>
             <Text style={styles.crossSellTitle}>Potencial de Evolução da Operação</Text>
             <Text style={{ fontSize: 12, color: '#94a3b8', textAlign: 'center', marginBottom: 15 }}>
@@ -594,9 +600,15 @@ export default function ProposalPDFDocument({ estabelecimento, proprietario, res
         <View style={{ marginTop: 40, paddingTop: 20, borderTopWidth: 2, borderTopColor: '#e2e8f0' }}>
           <Text style={[styles.sectionTitle, { textAlign: 'center', marginBottom: 20 }]}>Nossos Planos</Text>
           
-          {Object.entries(pricingConfig?.planos || {}).map(([key, p], index) => (
+          {Object.values(pricingConfig?.planos || {})
+            .filter(p => p.visible !== false)
+            .sort((a, b) => (a.ordem || 0) - (b.ordem || 0))
+            .map((p, index) => (
             <View key={index} style={{ marginBottom: 15, padding: 15, backgroundColor: '#f8fafc', borderRadius: 8, borderWidth: 1, borderColor: '#cbd5e1' }}>
-              <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#0f172a', marginBottom: 5, textTransform: 'uppercase' }}>{p.nome}</Text>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
+                <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#0f172a', textTransform: 'uppercase' }}>{p.nome}</Text>
+                <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#0084d1' }}>{formatMoney(p.preco)}<Text style={{ fontSize: 10, color: '#64748b' }}>/mês</Text></Text>
+              </View>
               <Text style={{ fontSize: 10, color: '#475569', marginBottom: 10, lineHeight: 1.4 }}>{p.description}</Text>
               
               {p.features && p.features.length > 0 && (
