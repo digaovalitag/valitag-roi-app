@@ -64,6 +64,7 @@ function App() {
   const [descontoSetupLicencasRs, setDescontoSetupLicencasRs] = useState(0);
   const [validadeProposta, setValidadeProposta] = useState('3 dias');
   const [validadeSetup, setValidadeSetup] = useState('48 horas');
+  const [skipDiagnostic, setSkipDiagnostic] = useState(false);
   const [questions, setQuestions] = useState(DEFAULT_QUESTIONS);
   const [responses, setResponses] = useState({});
   const [team, setTeam] = useState({});
@@ -113,6 +114,9 @@ function App() {
     if (savedResponses) setResponses(JSON.parse(savedResponses));
     const savedStep = localStorage.getItem('valitag_current_step');
     if (savedStep) setCurrentStep(parseInt(savedStep));
+    
+    const savedSkip = localStorage.getItem('valitag_skip_diagnostic');
+    if (savedSkip) setSkipDiagnostic(savedSkip === 'true');
     
     const savedTeam = localStorage.getItem('valitag_team');
     if (savedTeam) setTeam(JSON.parse(savedTeam));
@@ -232,6 +236,10 @@ function App() {
     localStorage.setItem('valitag_hardware', JSON.stringify(hardwareConfig));
   }, [hardwareConfig]);
 
+  useEffect(() => {
+    localStorage.setItem('valitag_skip_diagnostic', skipDiagnostic.toString());
+  }, [skipDiagnostic]);
+
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   const handleSendProposal = async () => {
@@ -258,7 +266,7 @@ function App() {
           dados_proposta: {
             estabelecimento, proprietario, responsavel, fat, responses, planoId,
             descontoRs, descontoTaxa, descontoPlanoRs, descontoLicencasRs,
-            descontoSetupLicencasRs, licencasAdicionais
+            descontoSetupLicencasRs, licencasAdicionais, skipDiagnostic
           }
         }]);
         
@@ -289,6 +297,7 @@ function App() {
           licencasAdicionais={licencasAdicionais}
           validadeProposta={validadeProposta}
           validadeSetup={validadeSetup}
+          skipDiagnostic={skipDiagnostic}
         />
       );
       
@@ -359,14 +368,20 @@ function App() {
             setProprietario(data.proprietario || '');
             setResponsavel(data.responsavel || '');
             setFat(data.fat || '');
-            setResponses(data.responses || {});
-            setPlanoId(data.planoId || 'starter');
-            setDescontoRs(data.descontoRs || '');
-            setDescontoTaxa(data.descontoTaxa || false);
-            setDescontoPlanoRs(data.descontoPlanoRs || 0);
-            setDescontoLicencasRs(data.descontoLicencasRs || 0);
-            setDescontoSetupLicencasRs(data.descontoSetupLicencasRs || 0);
-            setLicencasAdicionais(data.licencasAdicionais || 0);
+          onLoadProposal={(d) => {
+            setEstabelecimento(d.estabelecimento || '');
+            setProprietario(d.proprietario || '');
+            setResponsavel(d.responsavel || '');
+            setFat(d.fat || '');
+            setResponses(d.responses || {});
+            setPlanoId(d.planoId || 'starter');
+            setDescontoRs(d.descontoRs || '');
+            setDescontoTaxa(d.descontoTaxa || false);
+            setDescontoPlanoRs(d.descontoPlanoRs || 0);
+            setDescontoLicencasRs(Number(d.descontoLicencasRs) || 0);
+            setDescontoSetupLicencasRs(Number(d.descontoSetupLicencasRs) || 0);
+            setLicencasAdicionais(Number(d.licencasAdicionais) || 0);
+            setSkipDiagnostic(!!d.skipDiagnostic);
             setCurrentStep(6);
             setShowSavedReports(false);
           }}
@@ -385,9 +400,9 @@ function App() {
                 proprietario={proprietario} setProprietario={setProprietario}
                 responsavel={responsavel} setResponsavel={setResponsavel}
                 fat={fat} setFat={setFat}
-                pricingConfig={pricingConfig}
                 questions={questions}
                 responses={responses} setResponses={setResponses}
+                skipDiagnostic={skipDiagnostic} setSkipDiagnostic={setSkipDiagnostic}
               />
             )}
 
@@ -432,7 +447,16 @@ function App() {
 
           <div className="sticky bottom-0 left-0 w-full bg-[#0f172a]/90 backdrop-blur-sm border-t border-white/5 p-4 z-10 flex justify-between px-8 mt-8">
             {currentStep > 1 ? (
-              <button onClick={() => setCurrentStep(currentStep - 1)} className="px-6 py-2.5 rounded-lg font-bold text-slate-300 hover:bg-[#1e293b] transition-colors">
+              <button 
+                onClick={() => {
+                  if (currentStep === 3 && skipDiagnostic) {
+                    setCurrentStep(1);
+                  } else {
+                    setCurrentStep(currentStep - 1);
+                  }
+                }} 
+                className="px-6 py-2.5 rounded-lg font-bold text-slate-300 hover:bg-[#1e293b] transition-colors"
+              >
                 Anterior
               </button>
             ) : <div/>}
@@ -445,12 +469,20 @@ function App() {
                   descontoLicencasRs, descontoSetupLicencasRs,
                   questions, responses, pricingConfig, licencasAdicionais
                 );
-                const isBlocked = currentStep === 1 && roiData.totalPerdaMensal === 0;
+                const isBlocked = currentStep === 1 && !skipDiagnostic && roiData.totalPerdaMensal === 0;
 
                 return (
                   <div className="relative group">
                     <button 
-                      onClick={() => !isBlocked && setCurrentStep(currentStep + 1)}
+                      onClick={() => {
+                        if (!isBlocked) {
+                          if (currentStep === 1 && skipDiagnostic) {
+                            setCurrentStep(3);
+                          } else {
+                            setCurrentStep(currentStep + 1);
+                          }
+                        }
+                      }}
                       disabled={isBlocked}
                       className={`px-8 py-2.5 rounded-lg font-bold text-white shadow-md transition-all active:scale-95 ${
                         currentStep === 2 

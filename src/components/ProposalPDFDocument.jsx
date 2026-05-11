@@ -261,7 +261,7 @@ const styles = StyleSheet.create({
   }
 });
 
-export default function ProposalPDFDocument({ estabelecimento, proprietario, responsavel, fat, planoId, descontoTaxa, descontoRs, descontoPlanoRs, descontoLicencasRs, descontoSetupLicencasRs, questions, responses, pricingConfig, hardwareConfig, linksConfig, licencasAdicionais = 0, validadeProposta, validadeSetup }) {
+export default function ProposalPDFDocument({ estabelecimento, proprietario, responsavel, fat, planoId, descontoTaxa, descontoRs, descontoPlanoRs, descontoLicencasRs, descontoSetupLicencasRs, questions, responses, pricingConfig, hardwareConfig, linksConfig, licencasAdicionais = 0, validadeProposta, validadeSetup, skipDiagnostic }) {
   const roi = calculateROI(fat, planoId, descontoTaxa, descontoRs, descontoPlanoRs, descontoLicencasRs, descontoSetupLicencasRs, questions, responses, pricingConfig, licencasAdicionais);
   const plano = pricingConfig?.planos[planoId] || pricingConfig?.planos.starter;
 
@@ -282,7 +282,7 @@ export default function ProposalPDFDocument({ estabelecimento, proprietario, res
         <View style={{ width: 60, height: 4, backgroundColor: primaryColor, alignSelf: 'center', borderRadius: 2 }} />
         
         <Text style={styles.coverTitle}>PROPOSTA COMERCIAL</Text>
-        <Text style={styles.coverSubtitle}>E ANÁLISE DE ROI</Text>
+        {!skipDiagnostic && <Text style={styles.coverSubtitle}>E ANÁLISE DE ROI</Text>}
 
         <View style={styles.boxTarget}>
           <Text style={{ fontSize: 10, color: '#94a3b8', textTransform: 'uppercase' }}>Preparado para:</Text>
@@ -301,7 +301,8 @@ export default function ProposalPDFDocument({ estabelecimento, proprietario, res
       </Page>
 
       {/* DIAGNÓSTICO */}
-      <Page size="A4" style={styles.page}>
+      {!skipDiagnostic && (
+        <Page size="A4" style={styles.page}>
         <View style={styles.header}>
           <View style={styles.headerLeft}>
             <Text style={styles.headerTitle}>O Dossiê da Sangria</Text>
@@ -344,9 +345,12 @@ export default function ProposalPDFDocument({ estabelecimento, proprietario, res
             Cada dia sem Valitag custa {formatMoney(roi.totalPerdaDiaria)} para o seu caixa.
           </Text>
         </View>
-      <View style={{ marginVertical: 30, borderBottomWidth: 2, borderBottomColor: '#e2e8f0' }} />
+        <View style={{ marginVertical: 30, borderBottomWidth: 2, borderBottomColor: '#e2e8f0' }} />
+        </Page>
+      )}
 
       {/* INVESTIMENTO E PLANOS */}
+      <Page size="A4" style={styles.page}>
         <View style={styles.header}>
           <View style={styles.headerLeft}>
             <Text style={styles.headerTitle}>Proposta de Investimento</Text>

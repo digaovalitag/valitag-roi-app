@@ -9,7 +9,8 @@ export default function Diagnostico({
   fat, setFat,
   pricingConfig,
   questions,
-  responses, setResponses
+  responses, setResponses,
+  skipDiagnostic, setSkipDiagnostic
 }) {
   const handleResponseChange = (id, value) => {
     setResponses(prev => ({ ...prev, [id]: value }));
@@ -17,9 +18,23 @@ export default function Diagnostico({
 
   return (
     <div className="max-w-3xl mx-auto p-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="mb-8">
-        <h2 className="text-3xl font-bold text-slate-100 tracking-tight">Diagnóstico Operacional</h2>
-        <p className="text-slate-400 mt-2 font-light">Insira os dados do cliente para calcular as perdas e projetar o ROI.</p>
+      <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-3xl font-bold text-slate-100 tracking-tight">Diagnóstico Operacional</h2>
+          <p className="text-slate-400 mt-2 font-light">Insira os dados do cliente para calcular as perdas e projetar o ROI.</p>
+        </div>
+        
+        <button
+          onClick={() => setSkipDiagnostic(!skipDiagnostic)}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold border transition-all ${
+            skipDiagnostic 
+              ? 'bg-amber-500/20 text-amber-400 border-amber-500/50 hover:bg-amber-500/30' 
+              : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700'
+          }`}
+        >
+          {skipDiagnostic ? <CheckCircle className="w-4 h-4" /> : <ClipboardList className="w-4 h-4" />}
+          {skipDiagnostic ? 'Venda Direta Ativada (Pulando Diagnóstico)' : 'Pular Diagnóstico'}
+        </button>
       </div>
 
       <div className="bg-[#1e293b] rounded-2xl shadow-lg border border-white/10 p-8 space-y-8">
@@ -71,33 +86,32 @@ export default function Diagnostico({
 
         <div className="border-t border-slate-800 my-6"></div>
 
-        {/* Faturamento */}
-        <div className="space-y-3">
-          <label className="flex items-center gap-2 text-sm font-semibold text-slate-300">
-            <DollarSign className="w-4 h-4 text-blue-500" />
-            Faturamento Mensal Bruto
-          </label>
-          <div className="relative">
-            <NumericFormat 
-              value={fat}
-              onValueChange={(values) => setFat(values.floatValue || '')}
-              prefix={'R$ '}
-              decimalSeparator={','}
-              thousandSeparator={'.'}
-              decimalScale={2}
-              fixedDecimalScale={true}
-              className="w-full px-4 py-3 bg-[#0f172a] rounded-xl border border-white/10 focus:ring-2 focus:ring-[#0084d1] focus:border-[#0084d1] outline-none transition-all text-lg font-black text-slate-200"
-              placeholder="R$ 0,00"
-            />
-          </div>
-        </div>
-
-
-
-        {/* Qualificação de Campo */}
-        {questions && questions.length > 0 && (
+        {!skipDiagnostic && (
           <>
-            <div className="space-y-4">
+            {/* Faturamento */}
+            <div className="space-y-3 mb-8">
+              <label className="flex items-center gap-2 text-sm font-semibold text-slate-300">
+                <DollarSign className="w-4 h-4 text-blue-500" />
+                Faturamento Mensal Bruto
+              </label>
+              <div className="relative">
+                <NumericFormat 
+                  value={fat}
+                  onValueChange={(values) => setFat(values.floatValue || '')}
+                  prefix={'R$ '}
+                  decimalSeparator={','}
+                  thousandSeparator={'.'}
+                  decimalScale={2}
+                  fixedDecimalScale={true}
+                  className="w-full px-4 py-3 bg-[#0f172a] rounded-xl border border-white/10 focus:ring-2 focus:ring-[#0084d1] focus:border-[#0084d1] outline-none transition-all text-lg font-black text-slate-200"
+                  placeholder="R$ 0,00"
+                />
+              </div>
+            </div>
+
+            {/* Qualificação de Campo */}
+            {questions && questions.length > 0 && (
+              <div className="space-y-4">
               <label className="flex items-center gap-2 text-sm font-semibold text-slate-300 mb-2">
                 <ClipboardList className="w-4 h-4 text-blue-500" />
                 Qualificação de Campo
@@ -214,7 +228,6 @@ export default function Diagnostico({
             <div className="border-t border-slate-800 my-6"></div>
           </>
         )}
-
       </div>
     </div>
   );
