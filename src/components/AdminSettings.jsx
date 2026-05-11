@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Download, Upload, Plus, Trash2, Link, RefreshCw, Eye, EyeOff } from 'lucide-react';
+import { Download, Upload, Plus, Trash2, Link, RefreshCw, Eye, EyeOff, Save, Loader2, Image as ImageIcon } from 'lucide-react';
 import { fetchValitagPlans } from '../logic/syncEngine';
 import AdminVendedores from './AdminVendedores';
 
@@ -7,6 +7,69 @@ export default function AdminSettings({ supabase, pricingConfig, setPricingConfi
   const fileInputRef = useRef(null);
   const { planos, taxa, descontoMax } = pricingConfig;
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [uploadingId, setUploadingId] = useState(null);
+
+  const handleSaveToCloud = async () => {
+    setIsSaving(true);
+    try {
+      const { error } = await supabase
+        .from('app_settings')
+        .update({
+          pricing_config: pricingConfig,
+          hardware_config: hardwareConfig,
+          links_config: linksConfig,
+          demo_modules: demoModules
+        })
+        .eq('id', 1);
+
+      if (error) throw error;
+      alert('Configurações salvas na nuvem com sucesso! Todos os vendedores receberão as atualizações.');
+    } catch (err) {
+      console.error('Erro ao salvar:', err);
+      alert('Erro ao salvar na nuvem. Verifique a conexão e tente novamente.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleImageUpload = async (file, type, id) => {
+    if (!file) return;
+    
+    // Validar tipo
+    if (!file.type.startsWith('image/')) {
+      alert('Por favor, selecione apenas imagens (PNG, JPG, etc).');
+      return;
+    }
+
+    setUploadingId(`${type}-${id}`);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${type}_${id}_${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `uploads/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('assets')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('assets')
+        .getPublicUrl(filePath);
+
+      if (type === 'impressora') {
+        handleImpressoraChange(id, 'imageUrl', publicUrl);
+      } else {
+        handleEtiquetaChange(id, 'imageUrl', publicUrl);
+      }
+    } catch (err) {
+      console.error('Erro no upload:', err);
+      alert('Erro ao enviar imagem. Verifique se o bucket "assets" existe e está público.');
+    } finally {
+      setUploadingId(null);
+    }
+  };
 
   const handleSyncPlans = async () => {
     setIsSyncing(true);
@@ -168,16 +231,26 @@ export default function AdminSettings({ supabase, pricingConfig, setPricingConfi
         <div className="flex gap-2">
           <input type="file" ref={fileInputRef} onChange={handleImport} accept=".json" className="hidden" />
           <button 
+            onClick={handleSaveToCloud}
+            disabled={isSaving}
+            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-sm font-bold transition-all disabled:opacity-50"
+          >
+            {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} 
+            Salvar na Nuvem
+          </button>
+          <button 
             onClick={() => fileInputRef.current?.click()}
             className="flex items-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm font-bold transition-all"
+            title="Importar Backup"
           >
-            <Upload className="w-4 h-4" /> Importar
+            <Upload className="w-4 h-4" />
           </button>
           <button 
             onClick={handleExport}
             className="flex items-center gap-2 px-3 py-2 bg-[#0084d1]/20 hover:bg-[#0084d1]/30 border border-[#0084d1]/50 text-blue-400 rounded-lg text-sm font-bold transition-all"
+            title="Exportar Backup"
           >
-            <Download className="w-4 h-4" /> Exportar Setup
+            <Download className="w-4 h-4" />
           </button>
         </div>
       </div>
@@ -465,10 +538,26 @@ export default function AdminSettings({ supabase, pricingConfig, setPricingConfi
                   type="text" value={imp.nome || ''} onChange={(e) => handleImpressoraChange(imp.id, 'nome', e.target.value)}
                   placeholder="Nome (Ex: Elgin L42 Pro)" className="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-sm"
                 />
-                <input 
-                  type="text" value={imp.imageUrl || ''} onChange={(e) => handleImpressoraChange(imp.id, 'imageUrl', e.target.value)}
-                  placeholder="URL da Foto / Nome em Assets (Ex: /elgin.jpg)" className="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-sm"
-                />
+                <div className="flex gap-2 w-full">
+                  <input 
+                    type="text" value={imp.imageUrl || ''} onChange={(e) => handleImpressoraChange(imp.id, 'imageUrl', e.target.value)}
+                    placeholder="URL da Foto ou faça Upload ->" className="flex-1 bg-slate-950 border border-slate-700 rounded-lg p-2 text-sm"
+                  />
+                  <input 
+                    type="file" 
+                    id={`upload-imp-${imp.id}`} 
+                    className="hidden" 
+                    accept="image/*"
+                    onChange={(e) => handleImageUpload(e.target.files[0], 'impressora', imp.id)}
+                  />
+                  <label 
+                    htmlFor={`upload-imp-${imp.id}`}
+                    className={`flex items-center justify-center px-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg cursor-pointer transition-colors ${uploadingId === `impressora-${imp.id}` ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    title="Upload de Imagem"
+                  >
+                    {uploadingId === `impressora-${imp.id}` ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
+                  </label>
+                </div>
                 <input 
                   type="text" value={imp.linkCompra || ''} onChange={(e) => handleImpressoraChange(imp.id, 'linkCompra', e.target.value)}
                   placeholder="Link de Compra (Mercado Livre, etc)" className="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-sm md:col-span-2"
@@ -497,10 +586,26 @@ export default function AdminSettings({ supabase, pricingConfig, setPricingConfi
                 />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <input 
-                  type="text" value={etiqueta.imageUrl || ''} onChange={(e) => handleEtiquetaChange(etiqueta.id, 'imageUrl', e.target.value)}
-                  placeholder="URL da Foto do Rolo" className="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-sm"
-                />
+                <div className="flex gap-2 w-full">
+                  <input 
+                    type="text" value={etiqueta.imageUrl || ''} onChange={(e) => handleEtiquetaChange(etiqueta.id, 'imageUrl', e.target.value)}
+                    placeholder="URL da Foto ou faça Upload ->" className="flex-1 bg-slate-950 border border-slate-700 rounded-lg p-2 text-sm"
+                  />
+                  <input 
+                    type="file" 
+                    id={`upload-etiq-${etiqueta.id}`} 
+                    className="hidden" 
+                    accept="image/*"
+                    onChange={(e) => handleImageUpload(e.target.files[0], 'etiqueta', etiqueta.id)}
+                  />
+                  <label 
+                    htmlFor={`upload-etiq-${etiqueta.id}`}
+                    className={`flex items-center justify-center px-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg cursor-pointer transition-colors ${uploadingId === `etiqueta-${etiqueta.id}` ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    title="Upload de Imagem"
+                  >
+                    {uploadingId === `etiqueta-${etiqueta.id}` ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
+                  </label>
+                </div>
                 <input 
                   type="text" value={etiqueta.linkCompra || ''} onChange={(e) => handleEtiquetaChange(etiqueta.id, 'linkCompra', e.target.value)}
                   placeholder="URL de Compra/Detalhes" className="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-sm"

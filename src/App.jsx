@@ -147,6 +147,40 @@ function App() {
       setPricingConfig(JSON.parse(savedPricing));
     }
 
+    // Puxar configurações globais da nuvem (Supabase)
+    const fetchGlobalSettings = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('app_settings')
+          .select('*')
+          .eq('id', 1)
+          .single();
+        
+        if (data && !error) {
+          if (data.pricing_config && Object.keys(data.pricing_config).length > 0) setPricingConfig(data.pricing_config);
+          if (data.hardware_config && Object.keys(data.hardware_config).length > 0) {
+            const hConfig = data.hardware_config;
+            // Mesmo vindo da nuvem, garantir que tem imageUrl se for vazio (fallback para locais)
+            if (hConfig.etiquetas) {
+              hConfig.etiquetas = hConfig.etiquetas.map((e, idx) => {
+                let url = e.imageUrl;
+                if (!url || url.startsWith('/src/') || url.startsWith('/assets/')) {
+                  url = [etiq1, etiq2, etiq3][idx] || '';
+                }
+                return { ...e, imageUrl: url };
+              });
+            }
+            setHardwareConfig(hConfig);
+          }
+          if (data.links_config && Object.keys(data.links_config).length > 0) setLinksConfig(data.links_config);
+          if (data.demo_modules && data.demo_modules.length > 0) setDemoModules(data.demo_modules);
+        }
+      } catch (err) {
+        console.error('Erro ao buscar configs globais:', err);
+      }
+    };
+    fetchGlobalSettings();
+
     // Tentar atualizar silenciosamente os planos via API
     (async () => {
       const apiPlanos = await fetchValitagPlans();
