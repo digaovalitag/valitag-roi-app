@@ -131,10 +131,13 @@ function App() {
     if (savedHardware) {
       const parsed = JSON.parse(savedHardware);
       if (parsed.etiquetas) {
-        parsed.etiquetas = parsed.etiquetas.map((e, idx) => ({
-          ...e,
-          imageUrl: e.imageUrl || [etiq1, etiq2, etiq3][idx] || ''
-        }));
+        parsed.etiquetas = parsed.etiquetas.map((e, idx) => {
+          let url = e.imageUrl;
+          if (!url || url.startsWith('/src/') || url.startsWith('/assets/')) {
+            url = [etiq1, etiq2, etiq3][idx] || '';
+          }
+          return { ...e, imageUrl: url };
+        });
       }
       setHardwareConfig(parsed);
     }
