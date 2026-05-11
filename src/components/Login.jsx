@@ -19,7 +19,7 @@ export default function Login({ supabase, onLogin }) {
         .from('vendedores')
         .select('*')
         .eq('email', email.trim().toLowerCase())
-        .eq('senha', senha)
+        .eq('senha', senha.trim())
         .single();
 
       if (dbError || !data) {
