@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Download, Upload, Plus, Trash2, Link, RefreshCw, Eye, EyeOff, Save, Loader2, Image as ImageIcon } from 'lucide-react';
+import { Download, Upload, Plus, Trash2, Link, RefreshCw, Eye, EyeOff, Save, Loader2, Image as ImageIcon, ArrowLeft, ArrowRight, GripHorizontal } from 'lucide-react';
 import { fetchValitagPlans } from '../logic/syncEngine';
 import AdminVendedores from './AdminVendedores';
 
@@ -9,6 +9,52 @@ export default function AdminSettings({ supabase, pricingConfig, setPricingConfi
   const [isSyncing, setIsSyncing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [uploadingId, setUploadingId] = useState(null);
+  const [draggedPlanId, setDraggedPlanId] = useState(null);
+
+  const movePlan = (id, direction) => {
+    const sortedIds = Object.values(planos).sort((a, b) => (a.ordem || 0) - (b.ordem || 0)).map(p => p.id);
+    const idx = sortedIds.indexOf(id);
+    if ((direction === -1 && idx === 0) || (direction === 1 && idx === sortedIds.length - 1)) return;
+
+    const targetIdx = idx + direction;
+    [sortedIds[idx], sortedIds[targetIdx]] = [sortedIds[targetIdx], sortedIds[idx]];
+
+    const newPlanos = { ...planos };
+    sortedIds.forEach((pId, index) => {
+      newPlanos[pId] = { ...newPlanos[pId], ordem: index };
+    });
+    setPricingConfig(prev => ({ ...prev, planos: newPlanos }));
+  };
+
+  const handleDragStart = (e, id) => {
+    setDraggedPlanId(id);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = (e, targetId) => {
+    e.preventDefault();
+    if (draggedPlanId === targetId || !draggedPlanId) return;
+
+    const sortedIds = Object.values(planos).sort((a, b) => (a.ordem || 0) - (b.ordem || 0)).map(p => p.id);
+    const draggedIdx = sortedIds.indexOf(draggedPlanId);
+    const targetIdx = sortedIds.indexOf(targetId);
+
+    sortedIds.splice(draggedIdx, 1);
+    sortedIds.splice(targetIdx, 0, draggedPlanId);
+
+    const newPlanos = { ...planos };
+    sortedIds.forEach((pId, index) => {
+      newPlanos[pId] = { ...newPlanos[pId], ordem: index };
+    });
+
+    setPricingConfig(prev => ({ ...prev, planos: newPlanos }));
+    setDraggedPlanId(null);
+  };
 
   const handleSaveToCloud = async () => {
     setIsSaving(true);
@@ -268,20 +314,45 @@ export default function AdminSettings({ supabase, pricingConfig, setPricingConfi
           </button>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {Object.values(planos).map(p => (
-            <div key={p.id} className={`bg-slate-900 border ${p.visible === false ? 'border-slate-800 opacity-50' : 'border-slate-700'} p-4 rounded-xl transition-all`}>
+          {Object.values(planos).sort((a, b) => (a.ordem || 0) - (b.ordem || 0)).map(p => (
+            <div 
+              key={p.id} 
+              draggable 
+              onDragStart={(e) => handleDragStart(e, p.id)}
+              onDragOver={handleDragOver}
+              onDrop={(e) => handleDrop(e, p.id)}
+              className={`bg-slate-900 border ${p.visible === false ? 'border-slate-800 opacity-50' : 'border-slate-700'} p-4 rounded-xl transition-all cursor-grab active:cursor-grabbing ${draggedPlanId === p.id ? 'opacity-30 border-blue-500' : ''}`}
+            >
               <div className="flex justify-between items-center mb-2">
-                <label className="block text-sm font-semibold text-slate-400 uppercase tracking-wider">
-                  {p.nome} (R$)
-                </label>
-                <button 
-                  onClick={() => handleToggleVisibility(p.id)}
-                  className="p-1 hover:bg-slate-800 rounded-md text-slate-400 hover:text-slate-200 transition-colors"
-                  title={p.visible === false ? "Mostrar plano na tela comercial" : "Ocultar plano da tela comercial"}
-                >
-                  {p.visible === false ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
+                <div className="flex items-center gap-2">
+                  <GripHorizontal className="w-4 h-4 text-slate-600" />
+                  <label className="block text-sm font-semibold text-slate-400 uppercase tracking-wider">
+                    {p.nome} (R$)
+                  </label>
+                </div>
+                <div className="flex gap-1">
+                  <button 
+                    onClick={() => movePlan(p.id, -1)}
+                    className="p-1 hover:bg-slate-800 rounded-md text-slate-500 hover:text-slate-300 transition-colors"
+                    title="Mover para esquerda"
+                  >
+                    <ArrowLeft className="w-3 h-3" />
+                  </button>
+                  <button 
+                    onClick={() => movePlan(p.id, 1)}
+                    className="p-1 hover:bg-slate-800 rounded-md text-slate-500 hover:text-slate-300 transition-colors"
+                    title="Mover para direita"
+                  >
+                    <ArrowRight className="w-3 h-3" />
+                  </button>
+                  <button 
+                    onClick={() => handleToggleVisibility(p.id)}
+                    className="p-1 hover:bg-slate-800 rounded-md text-slate-400 hover:text-slate-200 transition-colors ml-1"
+                    title={p.visible === false ? "Mostrar plano na tela comercial" : "Ocultar plano da tela comercial"}
+                  >
+                    {p.visible === false ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               <input 
                 type="number"
                 value={p.preco}

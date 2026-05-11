@@ -168,7 +168,10 @@ export default function Planos({ user, planoId, setPlanoId, licencasAdicionais, 
             Plano Recomendado
           </label>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {Object.values(planos).filter(p => p.visible !== false).map(p => (
+            {Object.values(planos)
+              .filter(p => p.visible !== false)
+              .sort((a, b) => (a.ordem || 0) - (b.ordem || 0))
+              .map(p => (
               <label 
                 key={p.id}
                 className={`relative flex flex-col p-6 cursor-pointer rounded-2xl border transition-all duration-300 ${
