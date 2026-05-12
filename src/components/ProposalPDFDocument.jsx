@@ -497,7 +497,7 @@ export default function ProposalPDFDocument({ estabelecimento, proprietario, res
         <Text style={[styles.sectionTitle, { borderBottomWidth: 1, borderBottomColor: '#e2e8f0', paddingBottom: 5, marginBottom: 15 }]}>Impressoras Compatíveis</Text>
         <View style={styles.hardwareGrid}>
           {(hardwareConfig?.impressoras || []).slice(0, 4).map((imp, idx) => (
-            <View key={idx} style={styles.printerCard}>
+            <View key={idx} style={styles.printerCard} wrap={false}>
               {(() => {
                 const url = imp.imageUrl?.trim() || '';
                 const isValid = url.startsWith('http') || url.startsWith('data:');
@@ -518,7 +518,7 @@ export default function ProposalPDFDocument({ estabelecimento, proprietario, res
         <Text style={[styles.sectionTitle, { borderBottomWidth: 1, borderBottomColor: '#e2e8f0', paddingBottom: 5, marginVertical: 15 }]}>Etiquetas Homologadas</Text>
         <View style={styles.hardwareGrid}>
           {(hardwareConfig?.etiquetas || []).slice(0, 3).map((etiq, idx) => (
-            <View key={idx} style={[styles.printerCard, { width: '31%', alignItems: 'center' }]}>
+            <View key={idx} style={[styles.printerCard, { width: '31%', alignItems: 'center' }]} wrap={false}>
               {etiq.imageUrl && <Image src={etiq.imageUrl} style={{ height: 50, objectFit: 'contain', marginBottom: 5 }} />}
               <Text style={[styles.textBold, { fontSize: 10, marginBottom: 5, textAlign: 'center' }]}>{etiq.tamanho}</Text>
               {etiq.linkCompra && (
