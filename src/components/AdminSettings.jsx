@@ -125,9 +125,11 @@ export default function AdminSettings({ supabase, pricingConfig, setPricingConfi
         const mergedPlanos = { ...prev.planos };
         Object.keys(apiPlanos).forEach(key => {
           const isVisible = mergedPlanos[key]?.visible !== undefined ? mergedPlanos[key].visible : true;
+          const existingOrdem = mergedPlanos[key]?.ordem;
           mergedPlanos[key] = {
             ...apiPlanos[key],
-            visible: isVisible
+            visible: isVisible,
+            ordem: existingOrdem !== undefined ? existingOrdem : (apiPlanos[key].ordem || 99)
           };
         });
 

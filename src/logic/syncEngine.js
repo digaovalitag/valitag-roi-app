@@ -111,7 +111,8 @@ export const fetchValitagPlans = async () => {
         description: plan.description || '',
         features: plan.features || [],
         recommended: !!plan.recommended,
-        visible: true
+        visible: true,
+        ordem: plan.order !== undefined ? plan.order : 99
       };
     });
     
