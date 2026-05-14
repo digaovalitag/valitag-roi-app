@@ -604,7 +604,7 @@ export default function ProposalPDFDocument({ estabelecimento, proprietario, res
             .filter(p => p.visible !== false)
             .sort((a, b) => (a.ordem || 0) - (b.ordem || 0))
             .map((p, index) => (
-            <View key={index} style={{ marginBottom: 15, padding: 15, backgroundColor: '#f8fafc', borderRadius: 8, borderWidth: 1, borderColor: '#cbd5e1' }}>
+            <View key={index} style={{ marginBottom: 15, padding: 15, backgroundColor: '#f8fafc', borderRadius: 8, borderWidth: 1, borderColor: '#cbd5e1' }} wrap={false}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
                 <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#0f172a', textTransform: 'uppercase' }}>{p.nome}</Text>
                 <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#0084d1' }}>{formatMoney(p.preco)}<Text style={{ fontSize: 10, color: '#64748b' }}>/mês</Text></Text>
@@ -614,15 +614,12 @@ export default function ProposalPDFDocument({ estabelecimento, proprietario, res
               {p.features && p.features.length > 0 && (
                 <View style={{ marginTop: 5 }}>
                   <Text style={{ fontSize: 9, fontWeight: 'bold', color: '#64748b', marginBottom: 5, textTransform: 'uppercase' }}>Incluso:</Text>
-                  {p.features.slice(0, 5).map((feat, i) => (
+                  {p.features.map((feat, i) => (
                     <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 3 }}>
                       <Text style={{ fontSize: 10, color: '#0ea5e9', marginRight: 5 }}>•</Text>
                       <Text style={{ fontSize: 9, color: '#334155' }}>{feat}</Text>
                     </View>
                   ))}
-                  {p.features.length > 5 && (
-                    <Text style={{ fontSize: 9, color: '#64748b', marginTop: 3, fontStyle: 'italic' }}>+ e mais...</Text>
-                  )}
                 </View>
               )}
             </View>
