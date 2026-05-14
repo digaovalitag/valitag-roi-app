@@ -84,7 +84,7 @@ export const fetchValitagPlans = async () => {
   try {
     // Utilizando proxy CORS (CodeTabs) pois a API original bloqueia localhost
     const targetUrl = 'https://www.valitag.com.br/api/public/plans';
-    const res = await fetch(`https://api.codetabs.com/v1/proxy?quest=${targetUrl}`);
+    const res = await fetch(`https://api.codetabs.com/v1/proxy?quest=${targetUrl}?t=${Date.now()}`);
     if (!res.ok) throw new Error('Network response was not ok');
     const data = await res.json();
     
